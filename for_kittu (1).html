@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Last Code</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'teal-dark': '#0E292B',
+                        'teal-secondary': '#123F42',
+                        'turquoise-muted': '#167D7F',
+                        'turquoise-soft': '#B8D8D5',
+                        'parchment': '#F3E7D0',
+                        'gold-antique': '#C6A15B',
+                        'rose-muted': '#A65D5D',
+                        'dark-text': '#183536',
+                    },
+                    fontFamily: {
+                        'serif': ['"Cormorant Garamond"', 'serif'],
+                        'body': ['"Lora"', 'serif'],
+                        'hand': ['"Caveat"', 'cursive'],
+                    },
+                    backgroundImage: {
+                        'noise': "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22 opacity=%220.05%22/%3E%3C/svg%3E')",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0E292B;
+            color: #F3E7D0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bg-texture {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.15;
+            mix-blend-mode: overlay;
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .arch-frame {
+            border-top-left-radius: 9999px;
+            border-top-right-radius: 9999px;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        
+        .oval-frame {
+            border-radius: 50% / 60% 60% 40% 40%;
+        }
+
+        .gold-border {
+            border: 1px solid rgba(198, 161, 91, 0.4);
+        }
+        
+        .gold-border-heavy {
+            border: 2px solid rgba(198, 161, 91, 0.7);
+        }
+
+        .image-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-container img {
+            transition: transform 3s ease;
+        }
+        
+        .image-container:hover img {
+            transform: scale(1.03);
+        }
+
+        /* Custom scrollbar for an elegant feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0E292B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #167D7F;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #C6A15B;
+        }
+
+        .sepia-subtle {
+            filter: sepia(0.2) contrast(0.95) brightness(0.9) saturate(0.8);
+        }
+        
+        .vintage-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(14, 41, 43, 0.2), rgba(198, 161, 91, 0.1));
+            pointer-events: none;
+        }
+
+        /* Hidden Easter egg — "The Last Code" label */
+        .secret-label {
+            opacity: 0.06;
+            color: #C6A15B;
+            letter-spacing: 0.4em;
+            transition: opacity 1.2s ease, text-shadow 1.2s ease, letter-spacing 0.8s ease;
+            cursor: default;
+            pointer-events: auto;
+            animation: secret-pulse 8s ease-in-out infinite;
+        }
+
+        .secret-label:hover {
+            opacity: 1;
+            letter-spacing: 0.55em;
+            text-shadow:
+                0 0 12px rgba(198, 161, 91, 0.9),
+                0 0 30px rgba(198, 161, 91, 0.5),
+                0 0 60px rgba(198, 161, 91, 0.2);
+            animation: none;
+        }
+
+        @keyframes secret-pulse {
+            0%, 100% { opacity: 0.04; }
+            50%       { opacity: 0.13; }
+        }
+    </style>
+</head>
+<body class="font-body antialiased selection:bg-turquoise-muted selection:text-parchment">
+
+    <!-- Subtle texture overlay for the whole site -->
+    <div class="bg-texture bg-noise"></div>
+
+    <!-- Fixed Audio Control (Top Left) -->
+    <div class="fixed top-6 left-6 z-40 flex items-center gap-3 mix-blend-difference fade-up">
+        <button id="audio-btn" class="w-10 h-10 rounded-full border border-gold-antique/50 flex items-center justify-center text-parchment hover:border-gold-antique hover:text-gold-antique transition-all duration-500 bg-teal-dark/50 backdrop-blur-sm group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 ml-0.5 group-[.playing]:hidden">
+                <path d="M8 5.14v14l11-7-11-7z"/>
+            </svg>
+            <div class="hidden group-[.playing]:flex items-center justify-center gap-0.5 h-3">
+                <span class="w-0.5 bg-gold-antique h-full animate-[bounce_1s_infinite]"></span>
+                <span class="w-0.5 bg-gold-antique h-2/3 animate-[bounce_1.2s_infinite]"></span>
+                <span class="w-0.5 bg-gold-antique h-4/5 animate-[bounce_0.8s_infinite]"></span>
+            </div>
+        </button>
+        <span class="text-xs uppercase tracking-widest font-serif text-parchment/70 hidden sm:block">Chaap Tilak</span>
+        
+        <!-- Hidden Audio Element -->
+        <audio id="bg-music" loop preload="auto" autoplay>
+            <source src="Chaap Tilak - Dark 7 White  Sumeet V, Nidhi S, Jatin S  Sargam Jassu, Nakash Aziz_MP3.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <!-- The Last Code - Title Mark (Top Right) -->
+    <div class="fixed top-8 right-8 z-40 hidden sm:block">
+        <span class="text-[10px] uppercase font-serif secret-label">The Last Code</span>
+    </div>
+
+    <main class="max-w-[1400px] mx-auto overflow-hidden">
+        
+        <!-- SECTION 01 — OPENING / HERO -->
+        <section class="min-h-screen relative flex items-center justify-center py-24 px-6 lg:px-20 border-b border-white/5">
+            <!-- Background faint image -->
+            <div class="absolute inset-0 opacity-10 overflow-hidden">
+                <img src="1.jpeg" alt="" class="w-full h-full object-cover blur-sm">
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full relative z-10">
+                
+                <!-- Hero Image Composition -->
+                <div class="lg:col-span-5 lg:col-start-2 order-2 lg:order-1 flex justify-center fade-up relative">
+                    <!-- Decorative back frame -->
+                    <div class="absolute -inset-4 gold-border arch-frame opacity-50 transform translate-x-3 translate-y-3"></div>
+                    <div class="absolute -left-12 bottom-12 w-32 h-40 gold-border opacity-30 z-0">
+                         <img src="2.jpeg" alt="" class="w-full h-full object-cover sepia-subtle opacity-60">
+                    </div>
+                    
+                    <div class="w-full max-w-sm arch-frame overflow-hidden image-container shadow-2xl relative z-10 vintage-overlay">
+                        <img src="1.jpeg" alt="A personal memory" class="w-full h-[65vh] object-cover sepia-subtle">
+                    </div>
+                </div>
+
+                <!-- Hero Text -->
+                <div class="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 flex flex-col justify-center fade-up" style="transition-delay: 0.2s;">
+                    <span class="text-gold-antique text-xs uppercase tracking-[0.3em] mb-6 block border-b border-gold-antique/30 pb-2 w-max">8 October 2026</span>
+                    
+                    <h1 class="font-serif text-6xl md:text-8xl font-light mb-4 text-parchment tracking-tight italic pr-4">For Kittu</h1>
+                    
+                    <p class="text-turquoise-soft font-serif italic text-xl md:text-2xl mb-16 max-w-md">"Some things I understood in seven days."</p>
+                    
+                    <div class="space-y-6 text-parchment/80 leading-relaxed md:text-lg max-w-md">
+                        <p class="font-serif text-2xl text-parchment mb-2">Hello Kittu,</p>
+                        
+                        <p>It’s 8th October 2026. It has been 7 days since we saw each other’s faces on video call. We have been together for 2 years, 5 months, and 9 days, and in this time I know I have made many mistakes.</p>
+                        
+                        <p class="text-turquoise-muted font-medium">I know we both are exhausted.</p>
+                        
+                        <p>For the last 7 days, we were on a break and giving each other space. In this space, I understood many things about myself, about you, and about our relationship.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 02 — “THE LAST SEVEN DAYS” -->
+        <section class="py-32 px-6 lg:px-20 bg-teal-secondary/30 relative">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-20 fade-up">
+                    <h2 class="font-serif text-4xl md:text-6xl text-parchment/90 mb-4">Seven days of silence.</h2>
+                    <div class="w-12 h-[1px] bg-gold-antique mx-auto opacity-50"></div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-16 items-center">
+                    <div class="fade-up order-2 md:order-1 space-y-8 text-lg leading-loose text-parchment/80">
+                        <p>I understood that giving space is important in a relationship. Sometimes we need time away from each other so we can understand ourselves, our thoughts, our mistakes, and what we really want.</p>
+                        
+                        <p>I also understood that I don’t want restrictions in my own life, and I don’t want to put any restrictions, insecurities, or pressure on you. I don’t want you to feel pressured because of me, and I don’t want our relationship to work only on expectations.</p>
+                    </div>
+
+                    <div class="fade-up order-1 md:order-2 flex justify-center">
+                        <div class="relative w-4/5">
+                            <!-- Minimal border framing -->
+                            <div class="absolute -inset-3 border border-turquoise-muted/30 -rotate-3 z-0"></div>
+                            <div class="image-container vintage-overlay z-10 relative">
+                                <img src="2.jpeg" alt="Quiet moment" class="w-full h-auto object-cover sepia-subtle grayscale-[30%]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 03 — FREEDOM WITHOUT LOSING EACH OTHER -->
+        <section class="py-20 md:py-32 px-6 lg:px-12 relative border-y border-turquoise-muted/10">
+            <!-- Full width collage background style -->
+            <div class="max-w-7xl mx-auto">
+                <div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+                    
+                    <div class="lg:col-span-7 fade-up relative z-10">
+                        <div class="grid grid-cols-2 gap-3 sm:gap-4 h-[50vh] md:h-[60vh]">
+                            <div class="h-full arch-frame mt-6 sm:mt-8 bg-teal-secondary relative overflow-hidden sepia-subtle shadow-xl">
+                                <img src="3.jpeg" alt="" class="w-full h-full object-cover sepia-subtle opacity-80">
+                                <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay"></div>
+                            </div>
+                            <div class="h-full arch-frame mb-6 sm:mb-8 bg-turquoise-muted relative overflow-hidden sepia-subtle shadow-xl">
+                                <img src="4.jpeg" alt="" class="w-full h-full object-cover sepia-subtle opacity-80">
+                                <div class="absolute inset-0 bg-noise opacity-20 mix-blend-overlay"></div>
+                            </div>
+                        </div>
+                        <!-- Absolute positioned text acting as art -->
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full md:w-[110%] lg:w-[120%] text-center pointer-events-none drop-shadow-2xl z-30">
+                            <h2 class="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-8xl text-parchment opacity-95 leading-tight md:leading-[1.1]">
+                                We can have space<br>
+                                <span class="italic text-turquoise-soft">and still choose</span><br>
+                                each other.
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-4 lg:col-start-9 fade-up mt-8 lg:mt-0 relative z-20">
+                        <div class="gold-border p-6 sm:p-8 md:p-12 bg-teal-dark/90 backdrop-blur-md relative shadow-2xl">
+                            <!-- Small accent pin -->
+                            <div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-gold-antique"></div>
+                            
+                            <p class="text-base sm:text-lg leading-loose text-parchment/80">
+                                These last 7 days also made me understand that we can have this <span class="text-turquoise-muted font-medium">freedom</span> and still be together. We don’t have to control each other’s lives or be present in front of each other 24/7. We can have our own <span class="text-turquoise-muted font-medium">space</span>, our own life, and our own personality, but still <span class="text-turquoise-muted font-medium">choose each other</span> and stay together.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 04 — UNDERSTANDING MYSELF -->
+        <section class="py-32 px-6 lg:px-20">
+            <div class="max-w-5xl mx-auto flex flex-col md:flex-row gap-16">
+                
+                <div class="md:w-1/3 fade-up">
+                    <h2 class="font-serif text-5xl md:text-6xl text-parchment leading-tight mb-8">What I found<br><span class="italic text-turquoise-muted">in myself.</span></h2>
+                    
+                    <div class="image-container oval-frame gold-border-heavy w-full max-w-[250px] aspect-[3/4] vintage-overlay">
+                        <img src="5.jpeg" alt="Self portrait" class="w-full h-full object-cover sepia-subtle opacity-80">
+                    </div>
+                </div>
+                
+                <div class="md:w-2/3 flex flex-col justify-center space-y-10 fade-up" style="transition-delay: 0.2s;">
+                    <div class="pl-0 md:pl-12 border-l-0 md:border-l border-gold-antique/20 py-4">
+                        <p class="text-xl text-parchment/90 leading-relaxed font-serif mb-6">I understood many things about myself also. I learned how to respect myself, and I learned how to respect you properly.</p>
+                        
+                        <p class="text-lg text-parchment/70 leading-relaxed">I understood that many insecurities I had were only thoughts in my mind and not reality. Sometimes I was creating problems because of what I was thinking, not because of what was actually happening.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 05 — MY MISTAKES -->
+        <section class="py-32 px-6 lg:px-20 bg-teal-secondary/40 relative overflow-hidden">
+            <!-- Subtle corner ornament -->
+            <svg class="absolute top-0 right-0 w-64 h-64 opacity-5 text-gold-antique pointer-events-none" viewBox="0 0 100 100" fill="currentColor"><path d="M100,0 L100,100 L0,100 Z"></path></svg>
+            
+            <div class="max-w-4xl mx-auto fade-up">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="h-[1px] w-12 bg-rose-muted"></div>
+                    <span class="font-hand text-xl text-rose-muted">I know this part matters.</span>
+                </div>
+                
+                <h2 class="font-serif text-6xl text-parchment mb-12">Where I was wrong.</h2>
+                
+                <div class="grid md:grid-cols-2 gap-12 text-lg text-parchment/80 leading-loose">
+                    <div class="space-y-6">
+                        <p>I also understood my mistakes. My short temper and shouting were a big issue, and I know I hurt you because of that.</p>
+                        <p>I have been working on this for the last 4 weeks, and I can see changes in myself.</p>
+                    </div>
+                    <div class="space-y-6">
+                        <p>I also improved my habit of emotionally blackmailing you. You can see that in this fight and in our last 2–3 fights, I did not blackmail you.</p>
+                        <p class="font-serif text-xl text-parchment/90 italic border-l-2 border-turquoise-muted pl-4">I know saying this is not enough, but I am trying to improve these things through my actions. I don’t want to become that person again.</p>
+                    </div>
+                </div>
+                
+                <!-- Horizontal isolated photo -->
+                <div class="mt-16 w-full h-[480px] md:h-[600px] image-container gold-border vintage-overlay">
+                    <img src="6.jpeg" alt="Abstract memory" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 06 — WHAT LOVE MEANS TO ME -->
+        <section class="py-40 px-6 lg:px-20 bg-parchment text-teal-dark relative text-center">
+            <!-- Switching palette briefly for emotional warmth -->
+            <div class="max-w-3xl mx-auto fade-up">
+                <h2 class="font-serif text-5xl md:text-7xl mb-12 italic leading-tight">I love you because I genuinely love you.</h2>
+                
+                <p class="text-xl md:text-2xl font-serif leading-relaxed text-teal-secondary">
+                    I also understood that I really love you unconditionally. I don’t want to love you with expectations, conditions, restrictions, or because I want something from you. <span class="block mt-4 font-bold">I love you because I genuinely love you.</span>
+                </p>
+                
+                <div class="mt-16 flex justify-center gap-2">
+                    <div class="w-1.5 h-1.5 rounded-full bg-gold-antique"></div>
+                    <div class="w-1.5 h-1.5 rounded-full bg-gold-antique"></div>
+                    <div class="w-1.5 h-1.5 rounded-full bg-gold-antique"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 07 — WHAT A RELATIONSHIP SHOULD BE -->
+        <section class="py-32 px-6 lg:px-12">
+            <div class="max-w-7xl mx-auto">
+                <div class="grid lg:grid-cols-12 gap-12 items-center">
+                    
+                    <div class="lg:col-span-5 fade-up order-2 lg:order-1">
+                        <h2 class="font-serif text-5xl md:text-6xl text-parchment mb-8">Love is not ownership.</h2>
+                        
+                        <p class="text-lg text-parchment/80 leading-relaxed mb-8">I understood that relationships are not contracts or properties that work on agreements. We don’t need to make rules for each other or control each other.</p>
+                        
+                        <div class="my-10 flex flex-col items-start gap-3 border-l border-gold-antique/30 pl-6 py-2 text-2xl font-serif text-turquoise-soft italic">
+                            <span>Trust.</span>
+                            <span>Love.</span>
+                            <span>Loyalty.</span>
+                            <span>Transparency.</span>
+                            <span>Understanding.</span>
+                            <span>Patience.</span>
+                            <span>Respect.</span>
+                        </div>
+                        
+                        <p class="text-lg text-parchment/80 leading-relaxed mb-6">A relationship works with trust, love, loyalty, transparency, understanding, patience, and respect.</p>
+                        
+                        <p class="text-lg text-parchment/90 font-medium">We don’t need to be in front of each other 24/7 to prove our love.</p>
+                    </div>
+
+                    <div class="lg:col-span-7 fade-up order-1 lg:order-2">
+                        <!-- Editorial Collage -->
+                        <div class="relative w-full aspect-square md:aspect-[4/3]">
+                            <!-- Image 1 -->
+                            <div class="absolute top-0 right-0 w-2/3 h-3/4 image-container gold-border z-10 vintage-overlay">
+                                <img src="7.jpeg" alt="Us" class="w-full h-full object-cover sepia-subtle">
+                            </div>
+                            <!-- Image 2 -->
+                            <div class="absolute bottom-0 left-0 w-1/2 h-2/3 image-container border-2 border-teal-dark z-20 vintage-overlay mix-blend-hard-light shadow-2xl">
+                                <img src="8.jpeg" alt="Details" class="w-full h-full object-cover grayscale-[50%]">
+                            </div>
+                            <!-- Decorative element -->
+                            <div class="absolute top-10 left-10 text-gold-antique/20 text-9xl font-serif italic pointer-events-none z-0">
+                                &
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 08 — NOT RESTARTING, MOVING FORWARD -->
+        <section class="py-32 px-6 lg:px-20 bg-gradient-to-b from-teal-dark to-teal-secondary relative">
+            <div class="max-w-4xl mx-auto text-center fade-up">
+                <h2 class="font-serif text-5xl md:text-7xl text-parchment mb-12">Not back to zero.</h2>
+                
+                <p class="text-2xl font-serif italic text-turquoise-soft mb-10 leading-relaxed">I don’t want us to restart from 0. I want us to continue from where we stopped, but with our new selves.</p>
+                
+                <p class="text-lg text-parchment/80 leading-loose text-left md:text-center">I know I have changed in many ways, and I am still improving. I am calmer now, I am focused on my work, and I want to develop my own personality and become better for myself, not only for this relationship. But I also want to do this while having you in my life.</p>
+            </div>
+            
+            <div class="w-full h-[30vh] mt-20 fade-up relative">
+                 <div class="absolute inset-0 image-container vintage-overlay opacity-40">
+                     <img src="9.jpeg" class="w-full h-full object-cover grayscale">
+                 </div>
+                 <div class="absolute inset-0 bg-gradient-to-t from-teal-secondary to-transparent"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 09 — WHEN WE GET TIRED -->
+        <section class="py-40 px-6 lg:px-20 flex flex-col items-center justify-center min-h-screen relative">
+            <div class="max-w-2xl mx-auto text-center fade-up z-10">
+                <h2 class="font-serif text-4xl md:text-5xl text-parchment/90 mb-12 font-light">Sometimes, we just need to breathe.</h2>
+                
+                <div class="space-y-8 text-lg text-parchment/70 leading-loose">
+                    <p>I understand now that sometimes we both get tired. At that time, we may not need more arguments, explanations, or conversations.</p>
+                    
+                    <p class="text-xl font-serif text-parchment italic py-4">Sometimes we only need space, rest, calmness, patience, and time.</p>
+                    
+                    <p>We should be able to give each other this space without thinking that space means we are losing each other.</p>
+                </div>
+            </div>
+            
+            <!-- Large faded background image for calmness -->
+             <div class="absolute inset-0 pointer-events-none opacity-20 z-0 flex items-center justify-center overflow-hidden">
+                <img src="5.jpeg" class="w-[120%] h-[120%] object-cover blur-sm sepia-subtle">
+             </div>
+        </section>
+
+        <!-- SECTION 10 — WHAT I WANT FOR US -->
+        <section class="py-32 px-6 lg:px-20 border-t border-gold-antique/10 bg-teal-dark">
+            <div class="max-w-5xl mx-auto grid md:grid-cols-12 gap-12">
+                
+                <div class="md:col-span-4 fade-up">
+                    <h2 class="font-serif text-5xl text-parchment sticky top-32">What I want<br>for us.</h2>
+                </div>
+                
+                <div class="md:col-span-8 fade-up space-y-12">
+                    <p class="text-xl font-serif text-parchment/90 leading-relaxed">So I don’t want us to go back to the same relationship we had before. I want us to move forward with everything we have learned.</p>
+                    
+                    <!-- Emphasized list -->
+                    <div class="space-y-6 font-serif text-3xl md:text-4xl text-turquoise-soft italic py-8 border-y border-turquoise-muted/20">
+                        <p class="transform hover:translate-x-4 transition-transform duration-500 cursor-default">Freedom without fear.</p>
+                        <p class="transform hover:translate-x-4 transition-transform duration-500 cursor-default">Love without pressure.</p>
+                        <p class="transform hover:translate-x-4 transition-transform duration-500 cursor-default">Trust without unnecessary insecurities.</p>
+                    </div>
+                    
+                    <div class="space-y-8 text-lg text-parchment/80 leading-loose">
+                        <p>I want us to have freedom without fear, love without pressure, and trust without unnecessary insecurities. I want both of us to grow individually and still grow together.</p>
+                        
+                        <p>I don’t want to force anything on you, and I don’t have any expectations from you. I just want us to continue from where we stopped, but this time with more understanding, trust, patience, and the changes we have learned from everything that happened.</p>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- SECTION 11 — FINAL FUTURE / CLOSING -->
+        <section class="py-40 px-6 lg:px-20 min-h-screen flex flex-col items-center justify-center relative bg-teal-secondary">
+            
+            <div class="max-w-3xl mx-auto text-center z-10 w-full">
+                
+                <div class="fade-up mb-16">
+                    <div class="w-32 h-48 mx-auto mb-10 image-container arch-frame gold-border-heavy vintage-overlay shadow-2xl">
+                        <img src="9.jpeg" class="w-full h-full object-cover sepia-subtle">
+                    </div>
+                    <p class="font-serif text-3xl md:text-5xl text-parchment mb-8">I really want to continue this relationship, Kittu.</p>
+                    <p class="text-lg text-parchment/70 leading-relaxed max-w-2xl mx-auto mb-8">Not only because we have already spent 2 years, 5 months, and 9 days together, but because even after everything, I still genuinely want you in my life.</p>
+                    <p class="text-lg text-parchment/70 leading-relaxed max-w-2xl mx-auto">I want us to create beautiful moments together, without pressure, without restrictions, and without losing ourselves.</p>
+                </div>
+                
+                <div class="h-40"></div> <!-- Significant empty space -->
+                
+                <div class="fade-up" style="transition-duration: 2s;">
+                    <p class="font-serif text-2xl md:text-3xl text-turquoise-soft italic mb-20">I am genuinely sorry.</p>
+                    
+                    <p class="font-serif text-4xl md:text-6xl text-parchment mb-12 tracking-wide">I love you, Kittu.</p>
+                    
+                    <p class="font-hand text-4xl md:text-5xl text-gold-antique transform -rotate-2 mt-8 opacity-90">— Your Anne</p>
+                    
+                    <p class="font-hand text-2xl md:text-3xl text-gold-antique/70 transform rotate-1 mt-4">The Last Code</p>
+                </div>
+                
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fade Up Animation Observer
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Optional: stop observing once animated to keep it visible
+                        // observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-up');
+            fadeElements.forEach(el => observer.observe(el));
+
+            // Audio Player Logic
+            const audioBtn = document.getElementById('audio-btn');
+            const bgMusic = document.getElementById('bg-music');
+
+            let isPlaying = false;
+
+            // Always skip the first 37 seconds of the song
+            const SKIP_SECONDS = 37;
+
+            // Set start time once metadata is ready
+            bgMusic.addEventListener('loadedmetadata', () => {
+                bgMusic.currentTime = SKIP_SECONDS;
+            });
+
+            // Also set it on canplay in case loadedmetadata already fired
+            bgMusic.addEventListener('canplay', () => {
+                if (bgMusic.currentTime < SKIP_SECONDS) {
+                    bgMusic.currentTime = SKIP_SECONDS;
+                }
+            }, { once: true });
+
+            const playAudio = async () => {
+                if (isPlaying) return;
+                try {
+                    if (bgMusic.currentTime < SKIP_SECONDS) {
+                        bgMusic.currentTime = SKIP_SECONDS;
+                    }
+                    await bgMusic.play();
+                    isPlaying = true;
+                    audioBtn.classList.add('playing');
+                    audioBtn.classList.remove('animate-pulse');
+                } catch (err) {
+                    console.log('Autoplay blocked — waiting for user interaction.', err);
+                    // Pulse the button so user knows to click it
+                    audioBtn.classList.add('animate-pulse');
+                }
+            };
+
+            // 1. Try immediately on page load
+            playAudio();
+
+            // 2. Unlock on first click anywhere on the page
+            const unlockOnInteraction = () => {
+                playAudio();
+                document.removeEventListener('click', unlockOnInteraction);
+                document.removeEventListener('touchstart', unlockOnInteraction);
+                document.removeEventListener('keydown', unlockOnInteraction);
+            };
+            document.addEventListener('click', unlockOnInteraction);
+            document.addEventListener('touchstart', unlockOnInteraction);
+            document.addEventListener('keydown', unlockOnInteraction);
+
+            // 3. Try on first scroll
+            window.addEventListener('scroll', () => { playAudio(); }, { passive: true, once: true });
+
+            // Toggle audio on button click
+            audioBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Don't double-trigger the unlock listener
+                if (isPlaying) {
+                    bgMusic.pause();
+                    isPlaying = false;
+                    audioBtn.classList.remove('playing');
+                } else {
+                    playAudio();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
